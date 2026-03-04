@@ -122,24 +122,29 @@ get_server_ip() {
 # ---------- 打印连接信息 ----------
 print_connection_info() {
     local IP="$1"
-    # 使用你定义的 SNI 域名作为连接地址，而不是 IP
-    local ADDR="${SNI}" 
-    
-    echo "🎉 Hysteria2 正式域名版部署成功！"
+    echo "🎉 Hysteria2 部署成功！（极简优化版）"
     echo "=========================================================================="
-    echo "📋 配置详情:"
-    echo "    🌐 接入域名: $ADDR"
-    echo "    🔌 端口: $SERVER_PORT"
-    echo "    🔑 密码: $AUTH_PASSWORD"
+    echo "📋 服务器信息:"
+    echo "   🌐 IP地址: $IP"
+    echo "   🔌 端口: $SERVER_PORT"
+    echo "   🔑 密码: $AUTH_PASSWORD"
     echo ""
-    echo "📱 节点链接（正式证书版，已关闭 Insecure）:"
-    # 注意这里将 IP 换成了 $ADDR，insecure 换成了 0
-    echo "hysteria2://${AUTH_PASSWORD}@${ADDR}:${SERVER_PORT}?sni=${SNI}&alpn=${ALPN}&insecure=0#Hy2-PRO-${ADDR}"
+    echo "📱 节点链接（SNI=${SNI}, ALPN=${ALPN}, 跳过证书验证）:"
+    echo "hysteria2://${AUTH_PASSWORD}@${IP}:${SERVER_PORT}?sni=${SNI}&alpn=${ALPN}&insecure=1#Hy2-Bing"
     echo ""
-    echo "⚠️ 提醒：请确保 OpenClash 中关闭 'Skip Cert Verify' (跳过证书验证)"
+    echo "📄 客户端配置文件:"
+    echo "server: ${IP}:${SERVER_PORT}"
+    echo "auth: ${AUTH_PASSWORD}"
+    echo "tls:"
+    echo "  sni: ${SNI}"
+    echo "  alpn: [\"${ALPN}\"]"
+    echo "  insecure: true"
+    echo "socks5:"
+    echo "  listen: 127.0.0.1:1080"
+    echo "http:"
+    echo "  listen: 127.0.0.1:8080"
     echo "=========================================================================="
 }
-
 # ---------- 主逻辑 ----------
 main() {
     download_binary
@@ -152,6 +157,7 @@ main() {
 }
 
 main "$@"
+
 
 
 
