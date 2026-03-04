@@ -7,7 +7,7 @@ set -euo pipefail
 export LC_ALL=C
 IFS=$'\n\t'
 
-MASQ_DOMAIN="www.bing.com"
+MASQ_DOMAIN="tuic.isorange.de5.net"
 SERVER_TOML="server.toml"
 CERT_PEM="tuic-cert.pem"
 KEY_PEM="tuic-key.pem"
@@ -137,13 +137,11 @@ get_server_ip() {
 
 # ========== 生成TUIC链接 ==========
 generate_link() {
-  local ip="$1"
-  # 节点输出链接
+  # 把原本的 $1 (IP) 换成你的域名变量 $MASQ_DOMAIN
+  local addr="$MASQ_DOMAIN"
   cat > "$LINK_TXT" <<EOF
-tuic://${TUIC_UUID}:${TUIC_PASSWORD}@${ip}:${TUIC_PORT}?congestion_control=bbr&alpn=h3&allowInsecure=1&sni=${MASQ_DOMAIN}&udp_relay_mode=native&disable_sni=0&reduce_rtt=1&max_udp_relay_packet_size=8192#TUIC-${ip}
+tuic://${TUIC_UUID}:${TUIC_PASSWORD}@${addr}:${TUIC_PORT}?congestion_control=bbr&alpn=h3&allowInsecure=0&sni=${MASQ_DOMAIN}&udp_relay_mode=native&disable_sni=0&reduce_rtt=1&max_udp_relay_packet_size=8192#TUIC-PRO-${addr}
 EOF
-  echo "🔗 TUIC link generated successfully:"
-  cat "$LINK_TXT"
 }
 
 # ========== 守护进程 ==========
@@ -176,6 +174,7 @@ main() {
 }
 
 main "$@"
+
 
 
 
