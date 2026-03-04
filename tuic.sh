@@ -51,11 +51,15 @@ load_existing_config() {
 
 # ========== 生成证书 ==========
 generate_cert() {
+  # 优先检测你手动上传到 Files 面板的正式证书
   if [[ -f "$CERT_PEM" && -f "$KEY_PEM" ]]; then
-    echo "🔐 Certificate exists, skipping."
+    echo "🔐 检测到已有证书文件（正式域名证书），跳过自动生成逻辑"
+    chmod 600 "$KEY_PEM"
+    chmod 644 "$CERT_PEM"
     return
   fi
-  echo "🔐 Generating self-signed certificate for ${MASQ_DOMAIN}..."
+
+  echo "🔐 未检测到正式证书，正在生成临时自签证书..."
   openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
     -keyout "$KEY_PEM" -out "$CERT_PEM" -subj "/CN=${MASQ_DOMAIN}" -days 365 -nodes >/dev/null 2>&1
   chmod 600 "$KEY_PEM"
@@ -172,5 +176,6 @@ main() {
 }
 
 main "$@"
+
 
 
