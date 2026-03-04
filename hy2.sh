@@ -8,10 +8,10 @@ set -e
 # ---------- 默认配置 ----------
 HYSTERIA_VERSION="v2.6.5"
 DEFAULT_PORT=22222         # 自适应端口
-AUTH_PASSWORD="ieshare2025"   # 建议修改为复杂密码
+AUTH_PASSWORD="7d9f2e8a1c5b4e3d6a9b"   # 建议修改为复杂密码
 CERT_FILE="cert.pem"
 KEY_FILE="key.pem"
-SNI="www.bing.com"
+SNI="hy2.isorange.de5.net"
 ALPN="h3"
 # ------------------------------
 
@@ -65,15 +65,25 @@ download_binary() {
 }
 
 # ---------- 生成证书 ----------
+# ---------- 证书处理（适配正式域名证书） ----------
 ensure_cert() {
+    # 这里的变量名 $CERT_FILE 和 $KEY_FILE 请确保与脚本开头的定义一致
     if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
-        echo "✅ 发现证书，使用现有 cert/key。"
+        echo "🔐 发现正式域名证书，正在优化权限并加载..."
+        # 必须修正权限，否则 Hy2 进程可能因无法读取私钥而崩溃
+        chmod 644 "$CERT_FILE"
+        chmod 600 "$KEY_FILE"
         return
     fi
-    echo "🔑 未发现证书，使用 openssl 生成自签证书（prime256v1）..."
+    
+    echo "🔑 未发现正式证书，正在生成临时自签证书..."
+    # 这里的 ${SNI} 建议在脚本开头改为你的真实域名
     openssl req -x509 -nodes -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
         -days 3650 -keyout "$KEY_FILE" -out "$CERT_FILE" -subj "/CN=${SNI}"
-    echo "✅ 证书生成成功。"
+    
+    chmod 644 "$CERT_FILE"
+    chmod 600 "$KEY_FILE"
+    echo "✅ 临时证书生成成功。"
 }
 
 # ---------- 写配置文件 ----------
@@ -109,29 +119,24 @@ get_server_ip() {
 }
 
 # ---------- 打印连接信息 ----------
+# ---------- 打印连接信息 ----------
 print_connection_info() {
     local IP="$1"
-    echo "🎉 Hysteria2 部署成功！（极简优化版）"
+    # 使用你定义的 SNI 域名作为连接地址，而不是 IP
+    local ADDR="${SNI}" 
+    
+    echo "🎉 Hysteria2 正式域名版部署成功！"
     echo "=========================================================================="
-    echo "📋 服务器信息:"
-    echo "   🌐 IP地址: $IP"
-    echo "   🔌 端口: $SERVER_PORT"
-    echo "   🔑 密码: $AUTH_PASSWORD"
+    echo "📋 配置详情:"
+    echo "    🌐 接入域名: $ADDR"
+    echo "    🔌 端口: $SERVER_PORT"
+    echo "    🔑 密码: $AUTH_PASSWORD"
     echo ""
-    echo "📱 节点链接（SNI=${SNI}, ALPN=${ALPN}, 跳过证书验证）:"
-    echo "hysteria2://${AUTH_PASSWORD}@${IP}:${SERVER_PORT}?sni=${SNI}&alpn=${ALPN}&insecure=1#Hy2-Bing"
+    echo "📱 节点链接（正式证书版，已关闭 Insecure）:"
+    # 注意这里将 IP 换成了 $ADDR，insecure 换成了 0
+    echo "hysteria2://${AUTH_PASSWORD}@${ADDR}:${SERVER_PORT}?sni=${SNI}&alpn=${ALPN}&insecure=0#Hy2-PRO-${ADDR}"
     echo ""
-    echo "📄 客户端配置文件:"
-    echo "server: ${IP}:${SERVER_PORT}"
-    echo "auth: ${AUTH_PASSWORD}"
-    echo "tls:"
-    echo "  sni: ${SNI}"
-    echo "  alpn: [\"${ALPN}\"]"
-    echo "  insecure: true"
-    echo "socks5:"
-    echo "  listen: 127.0.0.1:1080"
-    echo "http:"
-    echo "  listen: 127.0.0.1:8080"
+    echo "⚠️ 提醒：请确保 OpenClash 中关闭 'Skip Cert Verify' (跳过证书验证)"
     echo "=========================================================================="
 }
 
@@ -147,6 +152,7 @@ main() {
 }
 
 main "$@"
+
 
 
 
