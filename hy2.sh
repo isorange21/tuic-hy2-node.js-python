@@ -11,7 +11,7 @@ DEFAULT_PORT=22222         # 自适应端口
 AUTH_PASSWORD="7d9f2e8a1c5b4e3d6a9b"   # 建议修改为复杂密码
 CERT_FILE="cert.pem"
 KEY_FILE="key.pem"
-SNI="hy2.isorange.de5.net"
+SNI="www.bing.com"
 ALPN="h3"
 # ------------------------------
 
@@ -65,25 +65,15 @@ download_binary() {
 }
 
 # ---------- 生成证书 ----------
-# ---------- 证书处理（适配正式域名证书） ----------
 ensure_cert() {
-    # 这里的变量名 $CERT_FILE 和 $KEY_FILE 请确保与脚本开头的定义一致
     if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then
-        echo "🔐 发现正式域名证书，正在优化权限并加载..."
-        # 必须修正权限，否则 Hy2 进程可能因无法读取私钥而崩溃
-        chmod 644 "$CERT_FILE"
-        chmod 600 "$KEY_FILE"
+        echo "✅ 发现证书，使用现有 cert/key。"
         return
     fi
-    
-    echo "🔑 未发现正式证书，正在生成临时自签证书..."
-    # 这里的 ${SNI} 建议在脚本开头改为你的真实域名
+    echo "🔑 未发现证书，使用 openssl 生成自签证书（prime256v1）..."
     openssl req -x509 -nodes -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
         -days 3650 -keyout "$KEY_FILE" -out "$CERT_FILE" -subj "/CN=${SNI}"
-    
-    chmod 644 "$CERT_FILE"
-    chmod 600 "$KEY_FILE"
-    echo "✅ 临时证书生成成功。"
+    echo "✅ 证书生成成功。"
 }
 
 # ---------- 写配置文件 ----------
@@ -157,10 +147,6 @@ main() {
 }
 
 main "$@"
-
-
-
-
 
 
 
